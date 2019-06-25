@@ -63,7 +63,7 @@ module funct
   PUBLIC  :: init_dft_exxrpa, enforce_dft_exxrpa
 
   ! driver subroutines computing XC
-  PUBLIC  :: xc, xc_spin, gcxc, gcx_spin, gcc_spin, gcc_spin_more
+  PUBLIC  :: xc, custom_xc, xc_spin, gcxc, gcx_spin, gcc_spin, gcc_spin_more
   PUBLIC  :: tau_xc , tau_xc_spin, dmxc, dmxc_spin, dmxc_nc
   PUBLIC  :: tau_xc_array, tau_xc_array_spin
   PUBLIC  :: dgcxc, dgcxc_spin
@@ -134,10 +134,12 @@ module funct
   !              "vdw-df-y"     ="sla+pw+????+vdwy"   = vdW-DF-y, reserved Thonhauser, not implemented
   !              "vdw-df-z"     ="sla+pw+????+vdwz"   = vdW-DF-z, reserved Thonhauser, not implemented
   !              "rvv10" = "sla+pw+rw86+pbc+vv10"     = rVV10
+  !              "custom" = "custom" = custom machine learning functional
   !
   ! Any nonconflicting combination of the following keywords is acceptable:
   !
-  ! Exchange:    "nox"    none                           iexch=0
+  ! Exchange:             custom                         iexch=-1
+  !              "nox"    none                           iexch=0
   !              "sla"    Slater (alpha=2/3)             iexch=1 (default)
   !              "sl1"    Slater (alpha=1.0)             iexch=2
   !              "rxc"    Relativistic Slater            iexch=3
@@ -149,7 +151,8 @@ module funct
   !              "x3lp"   X3LYP(Slater*0.782+HF*0.218)   iexch=9
   !              "kli"    KLI aproximation for exx       iexch=10
   !
-  ! Correlation: "noc"    none                           icorr=0
+  ! Correlation:          custom                         icorr=-1
+  !              "noc"    none                           icorr=0
   !              "pz"     Perdew-Zunger                  icorr=1 (default)
   !              "vwn"    Vosko-Wilk-Nusair              icorr=2
   !              "lyp"    Lee-Yang-Parr                  icorr=3
@@ -419,8 +422,13 @@ CONTAINS
         force_meta_gga = .true.
         dftout = dftout(1:index(dftout,'+META')-1)
     endif
+
+    ! special case: CUSTOM model
+    IF ('CUSTOM' .EQ. TRIM(dftout) ) THEN
+       dft_defined = set_dft_values(-1,-1,0,0,0,0)
+
     ! special cases : PZ  (LDA is equivalent to PZ)
-    IF (('PZ' .EQ. TRIM(dftout) ).OR.('LDA' .EQ. TRIM(dftout) )) THEN
+    ELSE IF (('PZ' .EQ. TRIM(dftout) ).OR.('LDA' .EQ. TRIM(dftout) )) THEN
        dft_defined = set_dft_values(1,1,0,0,0,0)
     ! speciale cases : PW ( LDA with PW correlation )
     ELSE IF ( 'PW' .EQ. TRIM(dftout)) THEN
@@ -690,11 +698,13 @@ CONTAINS
     ! check for unrecognized labels
 
     if ( iexch<=0.and.icorr<=0.and.igcx<=0.and.igcc<= 0.and.imeta<=0 ) then
-        if ( inlc <= 0 .and. trim(dftout) /= 'NOX-NOC') then
-           call errore('set_dft_from_name',trim(dftout)//': unrecognized dft',1)
-        else
-           ! if inlc is the only nonzero index the label is likely wrong
-           call errore('set_dft_from_name',trim(dftout)//': strange dft, please check',inlc)
+        if ( iexch /= -1 .and. icorr /= -1 ) then
+            if ( inlc <= 0 .and. trim(dftout) /= 'NOX-NOC') then
+                call errore('set_dft_from_name',trim(dftout)//': unrecognized dft',1)
+            else
+                ! if inlc is the only nonzero index the label is likely wrong
+                call errore('set_dft_from_name',trim(dftout)//': strange dft, please check',inlc)
+            endif
         endif
     endif
     !
@@ -1245,6 +1255,42 @@ end subroutine write_dft_name
 !-----------------------------------------------------------------------
 !
 !-----------------------------------------------------------------------
+
+! CUSTOM MODEL
+subroutine custom_xc (rho, exc_custom, vxc_custom)
+  !-----------------------------------------------------------------------
+  !     input : rho=rho(r)
+  !     definitions: E_x = \int E_x(rho) dr, E_x(rho) = rho\epsilon_c(rho)
+  !                  same for correlation
+  !     output: ex = \epsilon_x(rho) ( NOT E_x(rho) )
+  !             vx = dE_x(rho)/drho  ( NOT d\epsilon_x(rho)/drho )
+  !             ec, vc as above for correlation
+  !
+  implicit none
+
+  real(DP) :: rho, exc_custom, vxc_custom
+  !real(DP) :: ec__, vc__
+  !
+  real(DP), parameter :: small = 1.E-10_DP,  third = 1.0_DP / 3.0_DP, &
+       pi34 = 0.6203504908994_DP  ! pi34=(3/4pi)^(1/3)
+  real(DP) :: rs
+  !
+  if (rho <= small) then
+     exc_custom = 0.0_DP
+     vxc_custom = 0.0_DP
+     return
+  else
+     rs = pi34 / rho**third
+     ! rs as in the theory of metals: rs=(3/(4pi rho))^(1/3)
+  endif
+      
+  exc_custom = 0.0_DP
+  vxc_custom = 0.0_DP
+  !
+  return
+end subroutine custom_xc
+
+!-----------------------------------------------------------------------
 subroutine xc (rho, ex, ec, vx, vc)
   !-----------------------------------------------------------------------
   !     lda exchange and correlation functionals - Hartree a.u.
@@ -1287,7 +1333,7 @@ subroutine xc (rho, ex, ec, vx, vc)
      ! rs as in the theory of metals: rs=(3/(4pi rho))^(1/3)
   endif
   !..exchange
-  if (iexch == 1) THEN             !  'sla'
+  IF (iexch == 1) THEN             !  'sla'
      call slater (rs, ex, vx)
   ELSEIF (iexch == 2) THEN         !  'sl1'
      call slater1(rs, ex, vx)

@@ -340,7 +340,7 @@ SUBROUTINE v_xc( rho, rho_core, rhog_core, etxc, vtxc, v )
   USE lsda_mod,         ONLY : nspin
   USE cell_base,        ONLY : omega
   USE spin_orb,         ONLY : domag
-  USE funct,            ONLY : xc, xc_spin, nlc, dft_is_nonlocc
+  USE funct,            ONLY : xc, custom_xc, xc_spin, nlc, dft_is_nonlocc, get_iexch, get_icorr
   USE scf,              ONLY : scf_type
   USE mp_bands,         ONLY : intra_bgrp_comm
   USE mp,               ONLY : mp_sum
@@ -361,6 +361,7 @@ SUBROUTINE v_xc( rho, rho_core, rhog_core, etxc, vtxc, v )
   ! ... local variables
   !
   REAL(DP) :: rhox, arhox, zeta, amag, vs, ex, ec, vx(2), vc(2), rhoneg(2)
+  REAL(DP) :: exc_custom, vxc_custom 
     ! the total charge in each point
     ! the absolute value of the charge
     ! the absolute value of the charge
@@ -396,15 +397,27 @@ SUBROUTINE v_xc( rho, rho_core, rhog_core, etxc, vtxc, v )
         arhox = ABS( rhox )
         !
         IF ( arhox > vanishing_charge ) THEN
-           !
-           CALL xc( arhox, ex, ec, vx(1), vc(1) )
-           !
-           v(ir,1) = e2*( vx(1) + vc(1) )
-           !
-           etxc = etxc + e2*( ex + ec ) * rhox
-           !
-           vtxc = vtxc + v(ir,1) * rho%of_r(ir,1)
-           !
+           IF (get_iexch() == -1 .AND. get_icorr() == -1) THEN ! CUSTOM MODEL
+               !
+               CALL custom_xc(arhox, exc_custom, vxc_custom) ! undefined x and c contributions
+               !
+               v(ir,1) = e2*vxc_custom
+               !
+               etxc = etxc + e2 * exc_custom * rhox
+               !
+               vtxc = vtxc + v(ir,1) * rho%of_r(ir,1)
+               !
+           ELSE
+               !
+               CALL xc( arhox, ex, ec, vx(1), vc(1) )
+               !
+               v(ir,1) = e2*( vx(1) + vc(1) )
+               !
+               etxc = etxc + e2*( ex + ec ) * rhox
+               !
+               vtxc = vtxc + v(ir,1) * rho%of_r(ir,1)
+               !
+           END IF
         ENDIF
         !
         IF ( rho%of_r(ir,1) < 0.D0 ) rhoneg(1) = rhoneg(1) - rho%of_r(ir,1)
