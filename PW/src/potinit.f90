@@ -65,6 +65,7 @@ SUBROUTINE potinit()
   INTEGER               :: is
   LOGICAL               :: exst 
   CHARACTER(LEN=320)    :: filename
+  INTEGER :: K
   !
   CALL start_clock('potinit')
   !
@@ -155,6 +156,9 @@ SUBROUTINE potinit()
          !
          ! OVERRIDE WITH RANDOM INITIALIZATION
          rho%of_g(:,1) = cmplx(1,0)
+         DO K=1, SIZE(rho%of_g(:,1))
+            rho%of_g(K,1) = cmplx(RAND(0),RAND(0))
+         END DO
          write(stdout,*) "NEW DENSITY IN G SPACE. value 1: ", rho%of_g(1,1)
      END IF
   END IF
