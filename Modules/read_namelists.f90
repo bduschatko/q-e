@@ -81,6 +81,7 @@ MODULE read_namelists_module
        IF( prog == 'CP' ) isave = 100
        !
        tstress = .FALSE.
+       native_density = .TRUE.
        tprnfor = .FALSE.
        tabps = .FALSE.
        !
@@ -713,6 +714,7 @@ MODULE read_namelists_module
        CALL mp_bcast( iprint,        ionode_id, intra_image_comm )
        CALL mp_bcast( isave,         ionode_id, intra_image_comm )
        CALL mp_bcast( tstress,       ionode_id, intra_image_comm )
+       CALL mp_bcast( native_density,ionode_id, intra_image_comm )
        CALL mp_bcast( tprnfor,       ionode_id, intra_image_comm )
        CALL mp_bcast( tabps,         ionode_id, intra_image_comm )
        CALL mp_bcast( dt,            ionode_id, intra_image_comm )

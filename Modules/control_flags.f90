@@ -39,7 +39,7 @@ MODULE control_flags
             tnosee, tnosep, tnoseh, tcp, tcap,                               &
             tconvthrs, tolp, convergence_criteria, tionstep, nstepe,         &
             tscreen, gamma_only, force_pairing, lecrpa, tddfpt, smallmem,    &
-            tfirst, tlast, tprint, trescalee, max_xml_steps  
+            tfirst, tlast, tprint, trescalee, max_xml_steps, native_density  
   !
   PUBLIC :: fix_dependencies, check_flags
   PUBLIC :: tksw, trhor, thdyn, trhow
@@ -70,6 +70,7 @@ MODULE control_flags
   LOGICAL :: tsdc          = .FALSE. ! cell geometry steepest descent
   LOGICAL :: tzeroc        = .FALSE. ! set to zero the cell geometry velocities
   LOGICAL :: tstress       = .FALSE. ! print stress to standard output
+  LOGICAL :: native_density= .TRUE.  ! whether to use QE's native density intialization
   LOGICAL :: tortho        = .FALSE. ! use iterative orthogonalization
   LOGICAL :: timing        = .FALSE. ! print out timing information
   LOGICAL :: memchk        = .FALSE. ! check for memory leakage

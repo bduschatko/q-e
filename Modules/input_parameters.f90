@@ -133,6 +133,10 @@ MODULE input_parameters
           !  .TRUE.  calculate the stress tensor
           !  .FALSE. do not calculate the stress tensor
 
+        LOGICAL :: native_density = .true.
+          ! .TRUE. calculate initial density on fresh calculation with AOs
+          ! .FALSE. randomly initialize density
+
         LOGICAL :: tprnfor = .true.
           !  .TRUE.  calculate the atomic forces
           !  .FALSE. do not calculate the atomic forces
@@ -284,7 +288,7 @@ MODULE input_parameters
           gdir, nppstr, wf_collect, lelfield, nberrycyc, refg,            &
           tefield2, saverho, tabps, lkpoint_dir, use_wannier, lecrpa,     &
           tqmmm, vdw_table_name, lorbm, memory, point_label_type,         &
-          lfcpopt, lfcpdyn, input_xml_schema_file, gate                                        
+          lfcpopt, lfcpdyn, input_xml_schema_file, gate, native_density                                        
 !
 !=----------------------------------------------------------------------------=!
 !  SYSTEM Namelist Input Parameters

@@ -34,7 +34,8 @@ SUBROUTINE potinit()
   USE fft_interfaces,       ONLY : fwfft
   USE gvect,                ONLY : ngm, gstart, g, gg, ig_l2g
   USE gvecs,                ONLY : doublegrid
-  USE control_flags,        ONLY : lscf, gamma_only
+  USE control_flags,        ONLY : lscf, gamma_only, tstress 
+  USe input_parameters,     ONLY : native_density
   USE scf,                  ONLY : rho, rho_core, rhog_core, &
                                    vltot, v, vrs, kedtau
   USE funct,                ONLY : dft_is_meta
@@ -106,49 +107,56 @@ SUBROUTINE potinit()
      END IF
      !
   ELSE
-     !
-     ! ... Case c): the potential is built from a superposition 
-     ! ... of atomic charges contained in the array rho_at
-     !
-     IF ( starting_pot == 'file' .AND. .NOT. exst ) &
-        WRITE( stdout, '(5X,"Cannot read rho : file not found")' )
-     !
-     WRITE( UNIT = stdout, &
-            FMT = '(/5X,"Initial potential from superposition of free atoms")' )
-     !
-     CALL atomic_rho_g( rho%of_g, nspin )
+     IF ( native_density ) THEN ! BLAKE CHANGE - ADD IF STATEMENT TO DENSITY
+         !
+         ! ... Case c): the potential is built from a superposition 
+         ! ... of atomic charges contained in the array rho_at
+         !
+         IF ( starting_pot == 'file' .AND. .NOT. exst ) &
+            WRITE( stdout, '(5X,"Cannot read rho : file not found")' )
+         !
+         WRITE( UNIT = stdout, &
+                FMT = '(/5X,"Initial potential from superposition of free atoms")' )
+         !
+         CALL atomic_rho_g( rho%of_g, nspin )
 
-     ! ... in the lda+U case set the initial value of ns
-     IF (lda_plus_u) THEN
-        !
-        IF (noncolin) THEN
-           CALL init_ns_nc()
-        ELSE
-           CALL init_ns()
-        ENDIF
-        !
-     ENDIF
+         ! ... in the lda+U case set the initial value of ns
+         IF (lda_plus_u) THEN
+            !
+            IF (noncolin) THEN
+               CALL init_ns_nc()
+            ELSE
+               CALL init_ns()
+            ENDIF
+            !
+         ENDIF
 
-     ! ... in the paw case uses atomic becsum
-     IF ( okpaw )      CALL PAW_atomic_becsum()
-     !
-     IF ( input_drho /= ' ' ) THEN
-        !
-        IF ( nspin > 1 ) CALL errore &
-             ( 'potinit', 'spin polarization not allowed in drho', 1 )
-        !
-        filename = TRIM(tmp_dir) // TRIM (prefix) // postfix // input_drho
-        CALL read_rhog ( filename, root_bgrp, intra_bgrp_comm, &
-             ig_l2g, nspin, v%of_g, gamma_only )
-        !
-        WRITE( UNIT = stdout, &
-               FMT = '(/5X,"a scf correction to at. rho is read from",A)' ) &
-            TRIM( filename )
-        !
-        rho%of_g = rho%of_g + v%of_g
-        !
+         ! ... in the paw case uses atomic becsum
+         IF ( okpaw )      CALL PAW_atomic_becsum()
+         !
+         IF ( input_drho /= ' ' ) THEN
+            !
+            IF ( nspin > 1 ) CALL errore &
+                 ( 'potinit', 'spin polarization not allowed in drho', 1 )
+            !
+            filename = TRIM(tmp_dir) // TRIM (prefix) // postfix // input_drho
+            CALL read_rhog ( filename, root_bgrp, intra_bgrp_comm, &
+                 ig_l2g, nspin, v%of_g, gamma_only )
+            !
+            WRITE( UNIT = stdout, &
+                   FMT = '(/5X,"a scf correction to at. rho is read from",A)' ) &
+                TRIM( filename )
+            !
+            rho%of_g = rho%of_g + v%of_g
+            !
+         END IF
+         write(stdout,*) "OLD DENSITY IN G SPACE, value 1: ", rho%of_g(1,1)
+     ELSE
+         !
+         ! OVERRIDE WITH RANDOM INITIALIZATION
+         rho%of_g(:,1) = cmplx(1,0)
+         write(stdout,*) "NEW DENSITY IN G SPACE. value 1: ", rho%of_g(1,1)
      END IF
-     !
   END IF
   !
   ! ... check the integral of the starting charge, renormalize if needed
