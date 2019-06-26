@@ -340,7 +340,8 @@ SUBROUTINE v_xc( rho, rho_core, rhog_core, etxc, vtxc, v )
   USE lsda_mod,         ONLY : nspin
   USE cell_base,        ONLY : omega
   USE spin_orb,         ONLY : domag
-  USE funct,            ONLY : xc, custom_xc, xc_spin, nlc, dft_is_nonlocc, get_iexch, get_icorr
+  USE funct,            ONLY : xc, custom_xc, custom_cpp_model, xc_spin, nlc, &
+                               dft_is_nonlocc, get_iexch, get_icorr
   USE scf,              ONLY : scf_type
   USE mp_bands,         ONLY : intra_bgrp_comm
   USE mp,               ONLY : mp_sum
@@ -399,7 +400,8 @@ SUBROUTINE v_xc( rho, rho_core, rhog_core, etxc, vtxc, v )
         IF ( arhox > vanishing_charge ) THEN
            IF (get_iexch() == -1 .AND. get_icorr() == -1) THEN ! CUSTOM MODEL
                !
-               CALL custom_xc(arhox, exc_custom, vxc_custom) ! undefined x and c contributions
+               !CALL custom_xc(arhox, exc_custom, vxc_custom) ! undefined x and c contributions
+               CALL custom_cpp_model(arhox, exc_custom, vxc_custom) ! undefined x and c contributions
                !
                v(ir,1) = e2*vxc_custom
                !

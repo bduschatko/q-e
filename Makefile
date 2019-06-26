@@ -8,6 +8,10 @@
 
 include make.inc
 
+# compilers
+CC = g++
+FC = gfortran
+
 # execute a target irrespective of the presence of a file or directory 
 # with the same name
 .PHONY: install
@@ -174,7 +178,7 @@ all   : pwall cp ld1 upf tddfpt hp xspectra gwl
 # compile modules, libraries, directory for binaries, etc
 ###########################################################
 
-pwlibs: bindir libs mods libks_solvers dftd3
+pwlibs: bindir libs mods libks_solvers dftd3 cpp_models
 	if test -d PW ; then \
 	( cd PW ; $(MAKE) pw-lib || exit 1) ; fi
 
@@ -220,6 +224,10 @@ dftd3 : mods
 
 bindir :
 	test -d bin || mkdir bin
+
+cpp_models : 
+	( cd CModels ; ${CC} -c *.cpp || exit 1)
+    
 
 #############################################################
 # Targets for external libraries

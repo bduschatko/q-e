@@ -9,6 +9,9 @@ MODFLAGS= $(BASEMOD_FLAGS) \
 PWOBJS = \
 pwscf.o 
 
+CPPOBJS = \
+../../CModels/torch_model.o
+
 PWLIBS = \
 a2fmod.o \
 add_bfield.o \
@@ -259,7 +262,7 @@ pw.x : $(PWOBJS) libpw.a $(LIBOBJS) $(QEMODS)
                ln -fs ../PW/src/$@ dist.x ; ln -fs ../PW/src/$@ manypw.x ; )
 # dist.x and manypw.x link the same executable pw.x
 
-libpw.a : $(PWLIBS) 
+libpw.a : $(PWLIBS) $(CPPOBJS) 
 	$(AR) $(ARFLAGS) $@ $?
 	$(RANLIB) $@
 

@@ -63,7 +63,8 @@ module funct
   PUBLIC  :: init_dft_exxrpa, enforce_dft_exxrpa
 
   ! driver subroutines computing XC
-  PUBLIC  :: xc, custom_xc, xc_spin, gcxc, gcx_spin, gcc_spin, gcc_spin_more
+  PUBLIC  :: custom_xc, custom_cpp_model
+  PUBLIC  :: xc, xc_spin, gcxc, gcx_spin, gcc_spin, gcc_spin_more
   PUBLIC  :: tau_xc , tau_xc_spin, dmxc, dmxc_spin, dmxc_nc
   PUBLIC  :: tau_xc_array, tau_xc_array_spin
   PUBLIC  :: dgcxc, dgcxc_spin
@@ -1255,6 +1256,37 @@ end subroutine write_dft_name
 !-----------------------------------------------------------------------
 !
 !-----------------------------------------------------------------------
+! CUSTOM C++ MODEL
+
+subroutine custom_cpp_model (rho, exc_custom, vxc_custom)
+  implicit none
+  
+  ! interfaces for c++ code
+  INTERFACE
+    subroutine torch_model(rho, exc_custom, vxc_custom)
+      USE kinds,     ONLY: DP
+      REAL(DP), intent(in) :: rho
+      REAL(DP), intent(inout) :: exc_custom
+      REAL(DP), intent(inout) :: vxc_custom
+    end subroutine torch_model
+  END INTERFACE
+ 
+  REAL(DP) :: rho, exc_custom, vxc_custom
+  REAL(DP), parameter :: small = 1.E-10_DP,  third = 1.0_DP / 3.0_DP
+
+  exc_custom = 0.0
+  vxc_custom = 0.0
+
+  !
+  ! Too small density
+  if (rho <= small) then
+     return
+  else
+     call torch_model(rho, exc_custom, vxc_custom)
+  endif
+  
+  return
+end subroutine custom_cpp_model
 
 ! CUSTOM MODEL
 subroutine custom_xc (rho, exc_custom, vxc_custom)
@@ -1268,12 +1300,14 @@ subroutine custom_xc (rho, exc_custom, vxc_custom)
   !
   implicit none
 
-  real(DP) :: rho, exc_custom, vxc_custom
+  real(dp) :: rho, exc_custom, vxc_custom
   !real(DP) :: ec__, vc__
   !
   real(DP), parameter :: small = 1.E-10_DP,  third = 1.0_DP / 3.0_DP, &
        pi34 = 0.6203504908994_DP  ! pi34=(3/4pi)^(1/3)
-  real(DP) :: rs
+  real(dp), parameter  :: f= -0.687247939924714d0, alpha = 2.0d0/3.0d0, pisq = 9.86960440109d0
+  real(DP) :: rs, rsq
+  REAL(DP) :: vx, vc, ex, ec, a, b
   !
   if (rho <= small) then
      exc_custom = 0.0_DP
@@ -1281,11 +1315,31 @@ subroutine custom_xc (rho, exc_custom, vxc_custom)
      return
   else
      rs = pi34 / rho**third
+     rsq = rs * rs
      ! rs as in the theory of metals: rs=(3/(4pi rho))^(1/3)
   endif
-      
+ 
+  ! f = -9/8*(3/2pi)^(2/3)
+  !
   exc_custom = 0.0_DP
   vxc_custom = 0.0_DP
+  vx = 0.0_DP
+  vc = 0.0_DP
+  ex = 0.0_DP
+  ec = 0.0_DP
+ 
+  ex = f * alpha / rs ! ex in Ex = int ex rho
+  vx = 4.d0 / 3.d0 * f * alpha / rs ! d(ex rho)/drho
+
+  ! correlation constants
+  a = (log(2.0d0) - 1.0d0)/(2 * pisq)
+  b = 20.4562557d0
+
+  !ec = a * log(1 + b / rs + b / rsq )
+  !vc = ec - rs * ( -b / rsq - 2 * b / (rs * rsq)) / ec
+
+  exc_custom = ex + ec
+  vxc_custom = vx + vc
   !
   return
 end subroutine custom_xc
