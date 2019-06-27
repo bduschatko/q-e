@@ -10,7 +10,8 @@ PWOBJS = \
 pwscf.o 
 
 CPPOBJS = \
-../../CModels/torch_model.o
+../../CModels/torch_model.o \
+../../CModels/supreme-broccoli.cpp.o
 
 PWLIBS = \
 a2fmod.o \
