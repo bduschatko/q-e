@@ -137,6 +137,16 @@ MODULE input_parameters
           ! .TRUE. calculate initial density on fresh calculation with AOs
           ! .FALSE. randomly initialize density
 
+        CHARACTER(len=256) :: hyper_param_dir = './'
+          ! specify the location of parameter files for custom model
+
+        CHARACTER(len=256) :: hyper_param_file = ' '
+        ! specify which file to use for parameters of custom model
+
+        ! parameters for custom model, not to be included in the namelist
+        REAL(DP), ALLOCATABLE :: params(:)
+        !REAL(DP) :: params(5)
+
         LOGICAL :: tprnfor = .true.
           !  .TRUE.  calculate the atomic forces
           !  .FALSE. do not calculate the atomic forces
@@ -288,7 +298,8 @@ MODULE input_parameters
           gdir, nppstr, wf_collect, lelfield, nberrycyc, refg,            &
           tefield2, saverho, tabps, lkpoint_dir, use_wannier, lecrpa,     &
           tqmmm, vdw_table_name, lorbm, memory, point_label_type,         &
-          lfcpopt, lfcpdyn, input_xml_schema_file, gate, native_density                                        
+          lfcpopt, lfcpdyn, input_xml_schema_file, gate, native_density,  &
+          hyper_param_dir, hyper_param_file                                        
 !
 !=----------------------------------------------------------------------------=!
 !  SYSTEM Namelist Input Parameters
@@ -391,6 +402,8 @@ MODULE input_parameters
           ! Variable used to overwrite dft definition contained in
           ! pseudopotential files; 'none' means DFT is read from pseudos.
           ! Only used in PW - allowed values: any legal DFT value
+
+
 
         REAL(DP) :: starting_charge( nsx ) = 0.0_DP
           ! ONLY PW

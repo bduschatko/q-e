@@ -107,6 +107,18 @@ MODULE read_namelists_module
           pseudo_dir = TRIM( pseudo_dir ) // '/espresso/pseudo/'
        END IF
        !
+       ! ... directory containing hyper parameters
+       !
+       CALL get_environment_variable( 'ESPRESSO_HYPERPARAMS', hyper_param_dir )
+       IF ( TRIM( hyper_param_dir ) == ' ') THEN
+          CALL get_environment_variable( 'HOME', hyper_param_dir )
+          pseudo_dir = TRIM( hyper_param_dir ) // '/q-e/hyper_parameters/'
+       END IF
+       !
+       ! ... default hyper parameter file is nothing
+       !
+       hyper_param_file = ' '
+       !
        ! ... max number of md steps added to the xml file. Needs to be limited for very long 
        !     md simulations 
        CALL get_environment_variable('MAX_XML_STEPS', temp_string) 
@@ -750,6 +762,10 @@ MODULE read_namelists_module
        CALL mp_bcast( lfcpdyn,       ionode_id, intra_image_comm )
        CALL mp_bcast( input_xml_schema_file, ionode_id, intra_image_comm )
        CALL mp_bcast( gate,          ionode_id, intra_image_comm ) !TB
+       CALL mp_bcast( hyper_param_dir,ionode_id, intra_image_comm ) 
+       CALL mp_bcast( hyper_param_file,ionode_id, intra_image_comm ) 
+       !CALL mp_bcast( params,ionode_id, intra_image_comm ) 
+
        !
        RETURN
        !

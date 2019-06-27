@@ -221,7 +221,8 @@ SUBROUTINE iosys()
                                gdir, nppstr, wf_collect,lelfield,lorbm,efield, &
                                nberrycyc, efield_cart, lecrpa,                 &
                                vdw_table_name, memory, max_seconds, tqmmm,     &
-                               efield_phase, gate, max_xml_steps
+                               efield_phase, gate, max_xml_steps,              &
+                               hyper_param_dir, hyper_param_file, params
 
   !
   ! ... SYSTEM namelist
@@ -328,7 +329,8 @@ SUBROUTINE iosys()
   END INTERFACE
   !
   CHARACTER(LEN=256), EXTERNAL :: trimcheck
-  CHARACTER(LEN=256):: dft_
+  CHARACTER(LEN=256) :: dft_
+  CHARACTER(LEN=265) :: param_file
   !
   INTEGER, EXTERNAL :: read_config_from_file
   !
@@ -336,10 +338,27 @@ SUBROUTINE iosys()
   LOGICAL  :: exst, parallelfs
   REAL(DP) :: theta, phi, ecutwfc_pp, ecutrho_pp
   !
+  INTEGER :: n
+  !
   ! ... various initializations of control variables
   !
   lforce    = tprnfor
   !
+  !       
+  SELECT CASE( TRIM(input_dft) )
+  CASE( 'custom' )
+       write(*,*) "Failing in the case statement"
+      ! read hyper parameter files
+     param_file = TRIM(hyper_param_dir) // TRIM(hyper_param_file)
+      ! get array size 
+     OPEN(unit=99, file=param_file, action='read')
+     READ(99,*), n ! read size from first line
+     ALLOCATE(params(n)) ! allocate
+     READ(99,*) params ! set next row to the params
+      ! determine size and allocate memory, then initialize params
+     write(*,*) params
+  END SELECT
+
   SELECT CASE( trim( calculation ) )
   CASE( 'scf' )
      !

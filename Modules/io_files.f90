@@ -38,6 +38,10 @@ MODULE io_files
 #endif
   ! ... for parallel case and distributed I/O: node number
   CHARACTER(len=6)   :: nd_nmbr = '000000'
+  ! ... directory for hyper parameters of custom model
+  CHARACTER(len=256) :: hyper_param_dir = './'
+  ! ... file for hyper parameters of custom model
+  CHARACTER(len=256) :: hyper_param_file = ' '
   ! ... directory where pseudopotential files are found
   CHARACTER(len=256) :: pseudo_dir = './'
   ! ... location of PP files after a restart from file
