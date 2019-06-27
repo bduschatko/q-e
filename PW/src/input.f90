@@ -222,7 +222,9 @@ SUBROUTINE iosys()
                                nberrycyc, efield_cart, lecrpa,                 &
                                vdw_table_name, memory, max_seconds, tqmmm,     &
                                efield_phase, gate, max_xml_steps,              &
-                               hyper_param_dir, hyper_param_file, params
+                               hyper_param_dir, hyper_param_file,              &
+                               custom_weights, custom_basis, custom_sigma,     &
+                               custom_basis_size
 
   !
   ! ... SYSTEM namelist
@@ -347,16 +349,27 @@ SUBROUTINE iosys()
   !       
   SELECT CASE( TRIM(input_dft) )
   CASE( 'custom' )
-       write(*,*) "Failing in the case statement"
-      ! read hyper parameter files
+       write(*,*) "Setting up custom model parameters"
+      ! set up hyper parameter files
      param_file = TRIM(hyper_param_dir) // TRIM(hyper_param_file)
-      ! get array size 
+      ! open file 
      OPEN(unit=99, file=param_file, action='read')
-     READ(99,*), n ! read size from first line
-     ALLOCATE(params(n)) ! allocate
-     READ(99,*) params ! set next row to the params
-      ! determine size and allocate memory, then initialize params
-     write(*,*) params
+     !
+     READ(99,*), custom_sigma ! read sigma from first line
+     READ(99,*), custom_basis_size ! read basis size
+     !
+     ! allocate memory
+     !
+     ALLOCATE(custom_basis(custom_basis_size)) 
+     ALLOCATE(custom_weights(custom_basis_size + 1)) 
+     !
+     READ(99,*) custom_basis ! set next row to the basis
+     READ(99,*) custom_weights ! set next row to the weights
+     !
+     ! print to check
+     !
+     write(*,*) custom_sigma ! print to check
+     write(*,*) custom_basis_size
   END SELECT
 
   SELECT CASE( trim( calculation ) )

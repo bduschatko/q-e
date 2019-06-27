@@ -1259,38 +1259,43 @@ end subroutine write_dft_name
 ! CUSTOM C++ MODEL
 
 subroutine custom_cpp_model (rho, exc_custom, vxc_custom)
-   USE input_parameters, ONLY : params
+   USE input_parameters, ONLY : custom_basis, custom_weights, custom_basis_size, &
+                                 custom_sigma
 
    implicit none
   
   ! interfaces for c++ code
   INTERFACE
-    subroutine torch_model(params, rho, exc_custom, vxc_custom)
+    subroutine our_functional(custom_basis, custom_basis_size, custom_weights, &
+                              custom_sigma, rho, exc_custom, vxc_custom)
       USE kinds,     ONLY: DP 
-      REAL(DP), intent(in) :: params(:)
+      REAL(DP), intent(in) :: custom_basis(:)
+      INTEGER,  intent(in) :: custom_basis_size
+      REAL(DP), intent(in) :: custom_weights(:)
+      REAL(DP), intent(in) :: custom_sigma
       REAL(DP), intent(in) :: rho
       REAL(DP), intent(inout) :: exc_custom
       REAL(DP), intent(inout) :: vxc_custom
-    end subroutine torch_model
+    end subroutine our_functional
   END INTERFACE
  
-  !REAL(DP) :: params(:)
   REAL(DP) :: rho, exc_custom, vxc_custom
-  REAL(DP), parameter :: small = 1.E-10_DP,  third = 1.0_DP / 3.0_DP
+  REAL(DP), parameter :: small = 1.E-10_DP
 
   exc_custom = 0.0
   vxc_custom = 0.0
 
-   write(*,*) params
   !
   ! Too small density
   if (rho <= small) then
      return
   else
-     call torch_model(params, rho, exc_custom, vxc_custom)
+     call our_functional(custom_basis, custom_basis_size, custom_weights, &
+                        custom_sigma, rho, exc_custom, vxc_custom)
   endif
   
   return
+
 end subroutine custom_cpp_model
 
 ! CUSTOM MODEL

@@ -144,7 +144,12 @@ MODULE input_parameters
         ! specify which file to use for parameters of custom model
 
         ! parameters for custom model, not to be included in the namelist
-        REAL(DP), ALLOCATABLE :: params(:)
+        REAL(DP), ALLOCATABLE :: custom_weights(:)
+        REAL(DP), ALLOCATABLE :: custom_basis(:)
+        REAL(DP) :: custom_sigma = 0.0_DP
+        INTEGER :: custom_basis_size = 0
+
+
         !REAL(DP) :: params(5)
 
         LOGICAL :: tprnfor = .true.

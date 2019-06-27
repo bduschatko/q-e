@@ -401,11 +401,21 @@ SUBROUTINE v_xc( rho, rho_core, rhog_core, etxc, vtxc, v )
            IF (get_iexch() == -1 .AND. get_icorr() == -1) THEN ! CUSTOM MODEL
                !
                !CALL custom_xc(arhox, exc_custom, vxc_custom) ! undefined x and c contributions
+               !
+               write(*,*) "Total grid size: ", dfftp%nr1*dfftp%nr2*dfftp%nr3
+
                CALL custom_cpp_model(arhox, exc_custom, vxc_custom) ! undefined x and c contributions
                !
-               v(ir,1) = e2*vxc_custom
+               ! Coefficients have TOTAL integral measure absorbed, cancel this
                !
-               etxc = etxc + e2 * exc_custom * rhox
+               vxc_custom = vxc_custom * ( dfftp%nr1*dfftp%nr2*dfftp%nr3 ) / omega  
+               exc_custom = exc_custom * ( dfftp%nr1*dfftp%nr2*dfftp%nr3 ) / omega  
+               !
+               v(ir,1) = vxc_custom ! set global xc potential
+               !
+               !perform integration of density
+               !
+               etxc = etxc + exc_custom ! exc_custom is already exc*rho (energy density times rho)
                !
                vtxc = vtxc + v(ir,1) * rho%of_r(ir,1)
                !
