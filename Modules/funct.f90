@@ -1266,33 +1266,65 @@ subroutine custom_cpp_model (rho, exc_custom, vxc_custom)
   
   ! interfaces for c++ code
   INTERFACE
-    subroutine our_functional(custom_basis, custom_basis_size, custom_weights, &
+    subroutine our_functional(custom_basis_size, custom_basis_new, custom_weights_new, &
                               custom_sigma, rho, exc_custom, vxc_custom)
-      USE kinds,     ONLY: DP 
-      REAL(DP), intent(in) :: custom_basis(:)
+      !USE kinds,     ONLY: DP 
       INTEGER,  intent(in) :: custom_basis_size
-      REAL(DP), intent(in) :: custom_weights(:)
-      REAL(DP), intent(in) :: custom_sigma
-      REAL(DP), intent(in) :: rho
-      REAL(DP), intent(inout) :: exc_custom
-      REAL(DP), intent(inout) :: vxc_custom
+      !REAL(DP), intent(in) :: custom_basis(:)
+      REAL*8, intent(in) :: custom_basis_new(custom_basis_size)
+      !REAL*8, intent(in) :: Pbasis(*)
+      !REAL(DP), intent(in) :: custom_weights(:)
+      REAL*8, intent(in) :: custom_weights_new(custom_basis_size+1)
+      !REAL*8, intent(in) :: Pweights(*)
+      !REAL(DP), intent(in) :: custom_sigma
+      REAL*8, intent(in) :: custom_sigma
+      !REAL(DP), intent(in) :: rho
+      REAL*8, intent(in) :: rho
+      !REAL(DP), intent(inout) :: exc_custom
+      REAL*8, intent(inout) :: exc_custom
+      !REAL(DP), intent(inout) :: vxc_custom
+      REAL*8, intent(inout) :: vxc_custom
     end subroutine our_functional
   END INTERFACE
  
-  REAL(DP) :: rho, exc_custom, vxc_custom
+  REAL(DP) :: rho
+  REAL*8 :: exc_custom, vxc_custom
   REAL(DP), parameter :: small = 1.E-10_DP
 
-  exc_custom = 0.0
-  vxc_custom = 0.0
+  ! pointers to arrays
+  REAL*8, pointer :: Pbasis(:), Pweights(:)
+  REAL*8, target :: tbasis(custom_basis_size), tweights(custom_basis_size+1)
+  REAL*8 :: custom_basis_new(custom_basis_size), custom_weights_new(custom_basis_size+1)
+
+  custom_basis_new = custom_basis
+  custom_weights_new = custom_weights
+
+  WRITE(*,*) custom_basis(1)
+  
+  tbasis = custom_basis
+  tweights = custom_weights
+  Pbasis => tbasis
+  Pweights => tweights
+
+
+  !WRITE(*,*) Pbasis
+  !WRITE(*,*) tbasis(1)
+
+  exc_custom = 0.D0
+  vxc_custom = 0.D0
 
   !
   ! Too small density
   if (rho <= small) then
      return
   else
-     call our_functional(custom_basis, custom_basis_size, custom_weights, &
-                        custom_sigma, rho, exc_custom, vxc_custom)
+     call our_functional(custom_basis_size, DBLE(custom_basis_new), DBLE(custom_weights_new), &
+                        DBLE(custom_sigma), DBLE(rho), exc_custom, vxc_custom)
+     !call our_functional(Pbasis, custom_basis_size, Pweights, &
+     !                   DBLE(custom_sigma), DBLE(rho), exc_custom, vxc_custom)
   endif
+
+  WRITE(*,*) custom_sigma
   
   return
 
