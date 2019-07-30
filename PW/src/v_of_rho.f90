@@ -402,14 +402,13 @@ SUBROUTINE v_xc( rho, rho_core, rhog_core, etxc, vtxc, v )
                !
                !CALL custom_xc(arhox, exc_custom, vxc_custom) ! undefined x and c contributions
                !
-               write(*,*) "Total grid size: ", dfftp%nr1*dfftp%nr2*dfftp%nr3
-
                CALL custom_cpp_model(arhox, exc_custom, vxc_custom) ! undefined x and c contributions
                !
                ! Coefficients have TOTAL integral measure absorbed, cancel this
+               ! multiply by 2 to get from hartree to Ry
                !
-               vxc_custom = vxc_custom * ( dfftp%nr1*dfftp%nr2*dfftp%nr3 ) / omega  
-               exc_custom = exc_custom * ( dfftp%nr1*dfftp%nr2*dfftp%nr3 ) / omega  
+               vxc_custom = 2.0d0 * vxc_custom * ( dfftp%nr1*dfftp%nr2*dfftp%nr3 ) / omega  
+               exc_custom = 2.0d0 * exc_custom * ( dfftp%nr1*dfftp%nr2*dfftp%nr3 ) / omega  
                !
                v(ir,1) = vxc_custom ! set global xc potential
                !
@@ -419,6 +418,18 @@ SUBROUTINE v_xc( rho, rho_core, rhog_core, etxc, vtxc, v )
                !
                vtxc = vtxc + v(ir,1) * rho%of_r(ir,1)
                !
+
+               !!!!!!!!!!!!!!!!! CUSTOM LDA
+
+               !!! CALL custom_cpp_model(arhox, exc_custom, vxc_custom) ! undefined x and c contributions
+
+               !!! v(ir,1) = vxc_custom
+
+               !!! etxc = etxc + e2*exc_custom !* rhox
+    
+               !!! vtxc = vtxc + v(ir,1) * rho%of_r(ir,1)
+         
+
            ELSE
                !
                CALL xc( arhox, ex, ec, vx(1), vc(1) )
