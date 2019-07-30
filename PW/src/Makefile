@@ -2,6 +2,18 @@
 
 include ../../make.inc
 
+TORCHDIR = /Users/blakeduschatko/CodeLibraries/libtorch/
+
+UNAME := $(shell uname -s)
+
+TORCHFCFLAGS = -Wall -Wextra
+TORCHCCFLAGS = -Wall -Wextra -std=c++11 -isystem $(TORCHDIR)include -isystem $(TORCHDIR)include/torch/csrc/api/include
+ifeq ($(UNAME_S),Darwin)
+	TORCHLDFLAGS = -lstdc++ -ltorch -lcaffe2 -lc10
+else
+	TORCHLDFLAGS = -lc++ -ltorch -lcaffe2 -lc10 -v
+endif
+
 # location of needed modules and included files (if any)
 MODFLAGS= $(BASEMOD_FLAGS) \
           $(MOD_FLAG)../../dft-d3/
@@ -10,8 +22,7 @@ PWOBJS = \
 pwscf.o 
 
 CPPOBJS = \
-../../CModels/torch_model.o \
-../../CModels/supreme-broccoli.cpp.o
+../../CModels/supreme-broccoli.o
 
 PWLIBS = \
 a2fmod.o \
@@ -257,7 +268,7 @@ TLDEPS= bindir libs mods libks_solvers dftd3
 all : tldeps pw.x generate_vdW_kernel_table.x generate_rVV10_kernel_table.x
 
 pw.x : $(PWOBJS) libpw.a $(LIBOBJS) $(QEMODS)
-	$(LD) $(LDFLAGS) -o $@ \
+	$(LD) $(LDFLAGS) $(TORCHLDFLAGS) -o $@ \
 	   $(PWOBJS) libpw.a $(QEMODS) $(LIBOBJS) $(QELIBS)
 	- ( cd ../../bin; ln -fs ../PW/src/$@ . ; \
                ln -fs ../PW/src/$@ dist.x ; ln -fs ../PW/src/$@ manypw.x ; )
