@@ -4,16 +4,16 @@
 #include <cstdio>
 
 extern "C"{
-void our_functional_(int* basis_size, double basis[64], double weights[65],
+void our_functional_(int* basis_size, double basis[], double weights[],
                     double* sigma, double* rho, double* e_xc, double* v_xc) {
-    printf("Look we made it\n");
 
-
+    /*
     for (int i = 0; i < 1; ++i) {
         printf("%f \n", weights[i]);
     }
     printf("\n");
-
+    */
+    
 
     double c_val_d = 1 / std::sqrt(2 * M_PI * std::pow(*sigma, 2));
     double gamma_val_d = -1 / (2 * std::pow(*sigma, 2));
@@ -37,9 +37,7 @@ void our_functional_(int* basis_size, double basis[64], double weights[65],
 
     *e_xc = *((double*) t_e_xc.data_ptr());
     *v_xc = *((double*) t_v_xc.data_ptr());
-
-    printf("%f",*sigma);
-    printf("\n");
+    
 
     //printf("%f\n",*weights[0]);
 

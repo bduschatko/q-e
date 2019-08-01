@@ -1298,8 +1298,6 @@ subroutine custom_cpp_model (rho, exc_custom, vxc_custom)
 
   custom_basis_new = custom_basis
   custom_weights_new = custom_weights
-
-  WRITE(*,*) custom_basis(1)
   
   tbasis = custom_basis
   tweights = custom_weights
@@ -1323,8 +1321,6 @@ subroutine custom_cpp_model (rho, exc_custom, vxc_custom)
      !call our_functional(Pbasis, custom_basis_size, Pweights, &
      !                   DBLE(custom_sigma), DBLE(rho), exc_custom, vxc_custom)
   endif
-
-  WRITE(*,*) custom_sigma
   
   return
 
