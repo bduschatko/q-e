@@ -42,7 +42,7 @@ void our_functional_(int* basis_size, double basis[], double weights[],
     //printf("%f\n",*weights[0]);
 
     // LDA 
-    /*
+    
     double A = 0.0311;
     double B = -0.048;
     double C = 0.0020;
@@ -56,7 +56,7 @@ void our_functional_(int* basis_size, double basis[], double weights[],
     double rs = 1 / (pow(pi34, 3.0) * pow(*rho, 1.0/3.0));
     double drs = -pow(pi34,3.0)*pow(rs,4.0/3.0)/3.0;
 
-    double ex = C * pow(*rho, 1.0/3.0);
+    double ex = cx * pow(*rho, 1.0/3.0);
     double vx = ex + C*pow(*rho, 1.0/3.0)/3.0; 
 
     double ec = 0.0;
@@ -72,9 +72,9 @@ void our_functional_(int* basis_size, double basis[], double weights[],
         vc = ec - *rho*pow(ec,2.0)/gamma * (beta1*pow(rs,-1.0/2.0)*drs/2.0 + beta2*drs);
     }
 
-    *e_xc = *rho*(ec + ex);
-    *v_xc = vx + vc;
-    */
+    *e_xc += *rho*(ec + ex) * 1853.25 / (25 * 25 * 25);
+    *v_xc += vx + vc * 1853.25 / (25 * 25 * 25);
+    
 
     //printf("Fuck this shit I'm out\n");
 
