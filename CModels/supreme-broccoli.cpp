@@ -57,7 +57,7 @@ void our_functional_(int* basis_size, double basis[], double weights[],
     double drs = -pow(pi34,3.0)*pow(rs,4.0/3.0)/3.0;
 
     double ex = cx * pow(*rho, 1.0/3.0);
-    double vx = ex + C*pow(*rho, 1.0/3.0)/3.0; 
+    double vx = ex + cx*pow(*rho, 1.0/3.0)/3.0; 
 
     double ec = 0.0;
     double vc = 0.0;
@@ -73,7 +73,7 @@ void our_functional_(int* basis_size, double basis[], double weights[],
     }
 
     *e_xc += *rho*(ec + ex) * 1853.25 / (25 * 25 * 25);
-    *v_xc += vx + vc * 1853.25 / (25 * 25 * 25);
+    *v_xc += (vx + vc) * 1853.25 / (25 * 25 * 25);
     
 
     //printf("Fuck this shit I'm out\n");
