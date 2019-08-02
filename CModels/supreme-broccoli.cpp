@@ -5,7 +5,8 @@
 
 extern "C"{
 void our_functional_(int* basis_size, double basis[], double weights[],
-                    double* sigma, double* rho, double* e_xc, double* v_xc) {
+                    double* sigma, double* cutoff, double* maxval, double* scale, 
+                    double* rho, double* e_xc, double* v_xc) {
 
     /*
     for (int i = 0; i < 1; ++i) {
@@ -14,13 +15,12 @@ void our_functional_(int* basis_size, double basis[], double weights[],
     printf("\n");
     */
     
-
     double c_val_d = 1 / std::sqrt(2 * M_PI * std::pow(*sigma, 2));
     double gamma_val_d = -1 / (2 * std::pow(*sigma, 2));
 
     torch::Tensor t_basis = torch::from_blob(basis, {*basis_size}, torch::kDouble);
-    torch::Tensor t_weights = torch::from_blob(weights+1, {*basis_size}, torch::kDouble);
-    torch::Tensor t_intercept = torch::from_blob(weights, {1}, torch::kDouble);
+    torch::Tensor t_weights = torch::from_blob(weights, {*basis_size}, torch::kDouble);
+//    torch::Tensor t_intercept = torch::from_blob(weights, {1}, torch::kDouble);
     torch::Tensor t_rho = torch::from_blob(rho, {1}, torch::kDouble);
 
     torch::Tensor out1 = torch::add(t_rho, t_basis, -1);
@@ -31,12 +31,17 @@ void our_functional_(int* basis_size, double basis[], double weights[],
     out2.mul_(c_val_d);
     out2.mul_(t_weights);
 
-    torch::Tensor t_e_xc = torch::sum(out2) + t_intercept;
+    torch::Tensor t_e_xc = torch::sum(out2); // + t_intercept;
     torch::Tensor t_v_xc = torch::dot(out2, out1);
     t_v_xc.mul_(2 * gamma_val_d);
 
-    *e_xc = *((double*) t_e_xc.data_ptr());
-    *v_xc = *((double*) t_v_xc.data_ptr());
+    if (*rho > *cutoff) {
+        *e_xc = *maxval / 2.0 * ( cos(M_PI / *scale * (*rho - *cutoff)) + 1 );
+        *v_xc = -1.0 * *maxval / 2.0 * sin(M_PI / *scale * (*rho - *cutoff)) * M_PI / *scale;
+    } else {
+        *e_xc = *((double*) t_e_xc.data_ptr());
+        *v_xc = *((double*) t_v_xc.data_ptr());
+    }
     
 
     //printf("%f\n",*weights[0]);
@@ -53,7 +58,7 @@ void our_functional_(int* basis_size, double basis[], double weights[],
     double cx = -0.75 * pow(3.0 / M_PI, 1.0/3.0);
     double pi34 = pow(4.0 * M_PI / 3.0, 1.0/3.0);
     double gamma = -0.1423;
-    double rs = 1 / (pow(pi34, 3.0) * pow(*rho, 1.0/3.0));
+    double rs = 1 / (pi34 * pow(*rho, 1.0/3.0));
     double drs = -pow(pi34,3.0)*pow(rs,4.0/3.0)/3.0;
 
     double ex = cx * pow(*rho, 1.0/3.0);

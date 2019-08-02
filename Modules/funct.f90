@@ -1260,24 +1260,26 @@ end subroutine write_dft_name
 
 subroutine custom_cpp_model (rho, exc_custom, vxc_custom)
    USE input_parameters, ONLY : custom_basis, custom_weights, custom_basis_size, &
-                                 custom_sigma
+                                 custom_sigma, derivative_smoothing_cutoff, &
+                                 derivative_smoothing_maxval, derivative_smoothing_scale
 
    implicit none
   
   ! interfaces for c++ code
   INTERFACE
     subroutine our_functional(custom_basis_size, custom_basis_new, custom_weights_new, &
-                              custom_sigma, rho, exc_custom, vxc_custom)
+                              custom_sigma, derivative_smoothing_cutoff, &
+                              derivative_smoothing_maxval, derivative_smoothing_scale, &
+                              rho, exc_custom, vxc_custom)
       !USE kinds,     ONLY: DP 
       INTEGER,  intent(in) :: custom_basis_size
-      !REAL(DP), intent(in) :: custom_basis(:)
       REAL*8, intent(in) :: custom_basis_new(custom_basis_size)
-      !REAL*8, intent(in) :: Pbasis(*)
-      !REAL(DP), intent(in) :: custom_weights(:)
-      REAL*8, intent(in) :: custom_weights_new(custom_basis_size+1)
-      !REAL*8, intent(in) :: Pweights(*)
+      REAL*8, intent(in) :: custom_weights_new(custom_basis_size)
       !REAL(DP), intent(in) :: custom_sigma
       REAL*8, intent(in) :: custom_sigma
+      REAL*8, intent(in) :: derivative_smoothing_cutoff
+      REAL*8, intent(in) :: derivative_smoothing_maxval
+      REAL*8, intent(in) :: derivative_smoothing_scale
       !REAL(DP), intent(in) :: rho
       REAL*8, intent(in) :: rho
       !REAL(DP), intent(inout) :: exc_custom
@@ -1291,23 +1293,6 @@ subroutine custom_cpp_model (rho, exc_custom, vxc_custom)
   REAL*8 :: exc_custom, vxc_custom
   REAL(DP), parameter :: small = 1.E-10_DP
 
-  ! pointers to arrays
-  REAL*8, pointer :: Pbasis(:), Pweights(:)
-  REAL*8, target :: tbasis(custom_basis_size), tweights(custom_basis_size+1)
-  REAL*8 :: custom_basis_new(custom_basis_size), custom_weights_new(custom_basis_size+1)
-
-  custom_basis_new = custom_basis
-  custom_weights_new = custom_weights
-  
-  tbasis = custom_basis
-  tweights = custom_weights
-  Pbasis => tbasis
-  Pweights => tweights
-
-
-  !WRITE(*,*) Pbasis
-  !WRITE(*,*) tbasis(1)
-
   exc_custom = 0.D0
   vxc_custom = 0.D0
 
@@ -1316,10 +1301,10 @@ subroutine custom_cpp_model (rho, exc_custom, vxc_custom)
   if (rho <= small) then
      return
   else
-     call our_functional(custom_basis_size, DBLE(custom_basis_new), DBLE(custom_weights_new), &
-                        DBLE(custom_sigma), DBLE(rho), exc_custom, vxc_custom)
-     !call our_functional(Pbasis, custom_basis_size, Pweights, &
-     !                   DBLE(custom_sigma), DBLE(rho), exc_custom, vxc_custom)
+     call our_functional(custom_basis_size, DBLE(custom_basis), DBLE(custom_weights), &
+                        DBLE(custom_sigma), DBLE(derivative_smoothing_cutoff), &
+                        DBLE(derivative_smoothing_maxval), DBLE(derivative_smoothing_scale), &
+                        DBLE(rho), exc_custom, vxc_custom)
   endif
   
   return

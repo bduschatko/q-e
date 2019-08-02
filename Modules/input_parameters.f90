@@ -148,6 +148,9 @@ MODULE input_parameters
         REAL(DP), ALLOCATABLE :: custom_basis(:)
         REAL(DP) :: custom_sigma = 0.0_DP
         INTEGER :: custom_basis_size = 0
+        REAL(DP) :: derivative_smoothing_cutoff = 0.0_DP
+        REAL(DP) :: derivative_smoothing_maxval = 0.0_DP
+        REAL(DP) :: derivative_smoothing_scale = 0.0_DP
 
 
         !REAL(DP) :: params(5)
